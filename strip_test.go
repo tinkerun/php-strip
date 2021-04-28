@@ -91,6 +91,19 @@ FROM users
 			want:    []byte("<?php DB::select('\nSELECT COUNT(*)\nFROM users\n');"),
 			wantErr: false,
 		},
+
+		{
+			name:    "TestStrip:#5",
+			args:    args{
+				code: []byte(`
+echo 'hello'
+// some thing
+// some comments
+`),
+			},
+			want:    []byte("<?php echo'hello';"),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

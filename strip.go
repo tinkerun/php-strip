@@ -15,7 +15,7 @@ func Strip(code []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	stripPrinter := printer.NewPrinter(buf).IgnoreFreeFloating()
+	stripPrinter := printer.NewPrinter(buf).WithoutFreeFloating()
 	node.Accept(stripPrinter)
 
 	return buf.Bytes(), nil

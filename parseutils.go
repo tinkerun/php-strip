@@ -12,16 +12,18 @@ import (
 
 func Parse(code []byte) (ast.Vertex, error) {
 	if bytes.HasPrefix(code, []byte("<?")) || bytes.HasPrefix(code, []byte("<?php")) {
-		return ParseFile(code)
+		return ParseCode(code)
 	}
 	return ParseStmtList(code)
 }
 
-func ParseFile(code []byte) (*ast.Root, error) {
+func ParseCode(code []byte) (*ast.Root, error) {
 	phpVersion, err := version.New("7.4")
 	if err != nil {
 		return nil, err
 	}
+
+	code = append(code, []byte("\n;")...)
 
 	var parserErrors []*phperrors.Error
 	rootNode, err := parser.Parse(code, conf.Config{
@@ -37,10 +39,22 @@ func ParseFile(code []byte) (*ast.Root, error) {
 		return nil, errors.New(parserErrors[0].String())
 	}
 
-	return rootNode.(*ast.Root), nil
+	res := rootNode.(*ast.Root)
+
+	var stmtList []ast.Vertex
+	// 过滤空语句
+	for _, s := range res.Stmts {
+		if _, ok := s.(*ast.StmtNop); !ok {
+			stmtList = append(stmtList, s)
+		}
+	}
+
+	res.Stmts = stmtList
+
+	return res, nil
 }
 
 func ParseStmtList(code []byte) (*ast.Root, error) {
 	code = append([]byte("<?php "), code...)
-	return ParseFile(code)
+	return ParseCode(code)
 }
